@@ -1,10 +1,8 @@
-
 def ENV_NAME = getEnvName(env.BRANCH_NAME)
 def CONTAINER_NAME = "calculator-" + ENV_NAME
 def CONTAINER_TAG = getTag(env.BUILD_NUMBER, env.BRANCH_NAME)
 def HTTP_PORT = getHTTPPort(env.BRANCH_NAME)
 def EMAIL_RECIPIENTS = "m.fouad1103@gmail.com"
-
 
 node {
     try {
@@ -12,6 +10,9 @@ node {
             def dockerHome = tool 'DockerLatest'
             def mavenHome = tool 'MavenLatest'
             env.PATH = "${dockerHome}/bin:${mavenHome}/bin:${env.PATH}"
+
+            // Add GitHub's SSH key to known_hosts
+            sh 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
         }
 
         stage('Checkout') {
@@ -19,7 +20,6 @@ node {
         }
 
         stage('Build with test') {
-
             sh "mvn clean install"
         }
 
@@ -52,15 +52,13 @@ node {
         stage('Run App') {
             withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                 runApp(CONTAINER_NAME, CONTAINER_TAG, USERNAME, HTTP_PORT, ENV_NAME)
-
             }
         }
 
     } finally {
         deleteDir()
-        sendEmail(EMAIL_RECIPIENTS);
+        sendEmail(EMAIL_RECIPIENTS)
     }
-
 }
 
 def imagePrune(containerName) {
@@ -91,9 +89,10 @@ def runApp(containerName, tag, dockerHubUser, httpPort, envName) {
 
 def sendEmail(recipients) {
     mail(
-            to: recipients,
-            subject: "Build ${env.BUILD_NUMBER} - ${currentBuild.currentResult} - (${currentBuild.fullDisplayName})",
-            body: "Check console output at: ${env.BUILD_URL}/console" + "\n")
+        to: recipients,
+        subject: "Build ${env.BUILD_NUMBER} - ${currentBuild.currentResult} - (${currentBuild.fullDisplayName})",
+        body: "Check console output at: ${env.BUILD_URL}/console" + "\n"
+    )
 }
 
 String getEnvName(String branchName) {
