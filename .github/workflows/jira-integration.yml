@@ -17,55 +17,67 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Extract Jira issue key
-      id: extract-key
-      run: |
-        ISSUE_KEY=$(echo "${{ github.event.head_commit.message }}" | grep -oE '[A-Z]+-[0-9]+')
-        echo "ISSUE_KEY=$ISSUE_KEY" >> $GITHUB_ENV
+      - name: Extract Jira issue key
+        id: extract-key
+        run: |
+          ISSUE_KEY=$(echo "${{ github.event.head_commit.message }}" | grep -oE '[A-Z]+-[0-9]+')
+          echo "ISSUE_KEY=$ISSUE_KEY" >> $GITHUB_ENV
 
-    - name: Update Jira issue to "En cours"
-      if: env.ISSUE_KEY != ''
-      env:
-        JIRA_BASE_URL: https://testde.atlassian.net
-        JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-        JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-        ISSUE_KEY: ${{ env.ISSUE_KEY }}
-      run: |
-        curl -X POST \
-          -u $JIRA_USER_EMAIL:$JIRA_API_TOKEN \
-          --header 'Content-Type: application/json' \
-          --data '{"transition": {"id": "21"}}' \
-          $JIRA_BASE_URL/rest/api/3/issue/$ISSUE_KEY/transitions
+      - name: Update Jira issue to "En cours"
+        if: env.ISSUE_KEY != ''
+        env:
+          JIRA_BASE_URL: https://testde.atlassian.net
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          ISSUE_KEY: ${{ env.ISSUE_KEY }}
+        run: |
+          curl -X POST \
+            -u $JIRA_USER_EMAIL:$JIRA_API_TOKEN \
+            --header 'Content-Type: application/json' \
+            --data '{"transition": {"id": "21"}}' \
+            $JIRA_BASE_URL/rest/api/3/issue/$ISSUE_KEY/transitions
 
-    - name: Commit changes to develop branch
-      if: github.ref == 'refs/heads/develop'
-      run: |
-        git config --global user.name 'GitHub Actions'
-        git config --global user.email 'actions@github.com'
-        git checkout develop
-        git add .
-        git commit -m "Update develop branch with latest changes"
-        git push origin develop
+      - name: Commit changes to develop branch
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git checkout develop
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update develop branch with latest changes"
+            git push origin develop
+          fi
 
-    - name: Commit changes to master branch
-      if: github.ref == 'refs/heads/master'
-      run: |
-        git config --global user.name 'GitHub Actions'
-        git config --global user.email 'actions@github.com'
-        git checkout master
-        git add .
-        git commit -m "Update master branch with latest changes"
-        git push origin master
+      - name: Commit changes to master branch
+        if: github.ref == 'refs/heads/master'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git checkout master
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update master branch with latest changes"
+            git push origin master
+          fi
 
-    - name: Commit changes to feature branches
-      if: startsWith(github.ref, 'refs/heads/feature/')
-      run: |
-        git config --global user.name 'GitHub Actions'
-        git config --global user.email 'actions@github.com'
-        git checkout ${{ github.ref }}
-        git add .
-        git commit -m "Update feature branch with latest changes"
-        git push origin ${{ github.ref }}
+      - name: Commit changes to feature branches
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git checkout ${{ github.ref }}
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update feature branch with latest changes"
+            git push origin ${{ github.ref }}
+          fi
