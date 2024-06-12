@@ -47,8 +47,12 @@ jobs:
         git config --global user.email 'actions@github.com'
         git checkout develop
         git add .
-        git commit -m "Update develop branch with latest changes"
-        git push origin develop
+        if git diff-index --quiet HEAD --; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update develop branch with latest changes"
+          git push origin develop
+        fi
 
     - name: Commit changes to master branch
       if: github.ref == 'refs/heads/master'
@@ -57,8 +61,12 @@ jobs:
         git config --global user.email 'actions@github.com'
         git checkout master
         git add .
-        git commit -m "Update master branch with latest changes"
-        git push origin master
+        if git diff-index --quiet HEAD --; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update master branch with latest changes"
+          git push origin master
+        fi
 
     - name: Commit changes to feature branches
       if: startsWith(github.ref, 'refs/heads/feature/')
@@ -67,5 +75,9 @@ jobs:
         git config --global user.email 'actions@github.com'
         git checkout ${{ github.ref }}
         git add .
-        git commit -m "Update feature branch with latest changes"
-        git push origin ${{ github.ref }}
+        if git diff-index --quiet HEAD --; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update feature branch with latest changes"
+          git push origin ${{ github.ref }}
+        fi
