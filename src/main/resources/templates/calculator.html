@@ -77,7 +77,7 @@
               >
                 <ul id="errors" th:if="${#fields.hasErrors('*')}">
                   <li th:each="err : ${#fields.errors('*')}" th:text="${err}">
-                    Input is incorrect
+                    Input's incorrect
                   </li>
                 </ul>
               </div>
@@ -88,7 +88,7 @@
                     th:text="${response.getSolution()}"
                     class="badge"
                   >
-                    Solution
+                    Solution's
                   </span>
                 </ul>
               </div>
